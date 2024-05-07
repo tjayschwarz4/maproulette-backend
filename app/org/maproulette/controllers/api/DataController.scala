@@ -10,9 +10,11 @@ import org.maproulette.data._
 import org.maproulette.framework.model.Challenge
 import org.maproulette.models.dal.ChallengeDAL
 import org.maproulette.session.{SearchParameters, SessionManager}
+import anorm.{SQL, SqlParser}
+import anorm.SqlParser.scalar
 import org.maproulette.permissions.Permission
 import org.maproulette.utils.Utils
-import play.api.libs.json.Json.JsValueWrapper
+import play.api.libs.json.Json.{JsValueWrapper, toJsObject}
 import play.api.libs.json._
 import play.api.mvc._
 
@@ -126,12 +128,14 @@ class DataController @Inject() (
   def getChallengeSummary(
       id: Long,
       priority: String,
-      includeByPriority: Boolean = false
+      includeByPriority: Boolean = false,
+      virtualChallengeId: Long
   ): Action[AnyContent] = Action.async { implicit request =>
     this.sessionManager.authenticatedRequest { _ =>
       SearchParameters.withSearch { implicit params =>
         val response = this.dataManager.getChallengeSummary(
           challengeId = Some(id),
+          virtualChallengeId = Some(virtualChallengeId),
           priority = Utils.toIntList(priority),
           params = Some(params)
         )
@@ -274,6 +278,7 @@ class DataController @Inject() (
         this.dataManager.getChallengeSummary(
           projectList,
           None,
+          Some(0),
           length,
           start,
           orderColumnName,
