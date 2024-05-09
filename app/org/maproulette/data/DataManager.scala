@@ -390,10 +390,19 @@ class DataManager @Inject() (
         }
       )
 
-      val challengeFilter = challengeId match {
-        case Some(id) if id != -1 => s"AND tasks.parent_id = $id"
-        case _                    => buildProjectSearch(projectList, "c.parent_id", "c.id")
+      val challengeFilter = virtualParams match {
+        case Some(vp) =>
+          vp.challengeParams.challengeIds match {
+            case Some(idList) => s"AND tasks.parent_id IN (${idList.mkString(", ")})"
+            case _            => ""
+          }
+        case None =>
+          challengeId match {
+            case Some(id) if id != -1 => s"AND tasks.parent_id = $id"
+            case _                    => buildProjectSearch(projectList, "c.parent_id", "c.id")
+          }
       }
+
       val priorityFilter = priority match {
         case Some(p) =>
           val invert =
