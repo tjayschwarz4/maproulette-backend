@@ -140,8 +140,9 @@ class DataController @Inject() (
           params = Some(params)
         )
 
-        if (includeByPriority && response.nonEmpty) {
-          val priorityMap = this._fetchPrioritySummaries(Some(id), Some(params), false, Some(virtualChallengeId))
+        if (virtualChallengeId == 0 && includeByPriority && response.nonEmpty) {
+          val priorityMap =
+            this._fetchPrioritySummaries(Some(id), Some(params), false, Some(virtualChallengeId))
           val updated = Utils.insertIntoJson(
             Json.toJson(response).as[JsArray].head.as[JsValue],
             "priorityActions",
@@ -160,7 +161,7 @@ class DataController @Inject() (
       challengeId: Option[Long],
       params: Option[SearchParameters],
       onlyEnabled: Boolean = false,
-      virtualChallengeId: Option[Long],
+      virtualChallengeId: Option[Long]
   ): mutable.Map[String, JsValue] = {
     val prioritiesToFetch =
       List(Challenge.PRIORITY_HIGH, Challenge.PRIORITY_MEDIUM, Challenge.PRIORITY_LOW)
@@ -176,7 +177,7 @@ class DataController @Inject() (
         onlyEnabled = onlyEnabled
       )
       if (pResult.nonEmpty) {
-        priorityMap.put(p.toString, Json.toJson(pResult.head.actions))
+        priorityMap.put(p.toString, Json.toJson(pResult.map(result => result.actions)))
       } else {
         priorityMap
           .put(p.toString, Json.toJson(ActionSummary(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)))
@@ -198,7 +199,8 @@ class DataController @Inject() (
       if (includeByPriority) {
         val allUpdated =
           response.map(challenge => {
-            val priorityMap = this._fetchPrioritySummaries(Some(challenge.id), None, onlyEnabled, Some(0))
+            val priorityMap =
+              this._fetchPrioritySummaries(Some(challenge.id), None, onlyEnabled, Some(0))
             Utils.insertIntoJson(Json.toJson(challenge), "priorityActions", priorityMap, false)
           })
 
